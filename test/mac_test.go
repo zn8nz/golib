@@ -98,3 +98,33 @@ func TestIsMulticast(t *testing.T) {
 		}
 	}
 }
+
+func TestMACEquality(t *testing.T) {
+	tests := []struct {
+		mac1 MAC
+		mac2 MAC
+		want bool
+	}{
+		{MAC{}, MAC{}, true},
+		{MAC{0}, MAC{1}, false},
+		{MAC{1}, MAC{0}, false},
+		{MAC([...]byte{5:1}), MAC{5:1}, true},
+		{ParseMAC("9a-81-05-df-e9-2b"), ParseMAC("9A81.05DF.E92B"), true},
+		{ParseMAC("00-00-05-df-e9-2b"), ParseMAC("9A81.05DF.E92B"), false},
+		{MAC{5:0xff}, [6]byte{5:255}, true},
+	}
+	// MAC type is a [6]byte, so we can just test with standard == for equality
+	for i, test := range tests {
+		if got := test.mac1 == test.mac2; got != test.want {
+			t.Errorf("%d: %v==%v = %v, want %v", i, test.mac1, test.mac2, got, test.want)
+		}
+	}
+}
+
+func TestMACMap(t *testing.T) {
+	m := make(map[MAC]string)
+	m[ParseMAC("9a-81-05-df-e9-2b")] = "one"
+	if m[[6]byte{0x9a, 0x81, 0x05, 0xdf, 0xe9, 0x2b}] != "one" {
+		t.Errorf("MAC as map key doesn't work")
+	}
+}
